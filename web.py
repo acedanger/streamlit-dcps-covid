@@ -6,11 +6,14 @@ from datetime import date
 from os.path import exists
 import get_cases as cvd
 
+from plotly.subplots import make_subplots
+
 # csv exists in the same dir as this script
 csv = "dcps_dashboard_data.csv"
 df = pd.read_csv(csv) if exists(f"{csv}") else pd.DataFrame(cvd.getCovid())
 
-st.set_page_config(page_title="DCPS Reported cases of COVID-19",
+st.set_page_config(
+    page_title="DCPS Reported cases of COVID-19",
     page_icon=":school:",
     layout="wide"
 )
@@ -39,34 +42,48 @@ df['wk'] = df['date_time'].dt.isocalendar().week
 # filtering based on what's selected in the sidebar
 df_selection = df.query("day_of_week == @dy")
 
-cases_by_student = df.groupby(by=['date']).sum()[['students']]
-cases_by_staff = df.groupby(by=['date']).sum()[['staff']]
+cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
 
-figure_students = px.bar(
+# create a line chart for the student data
+fig_students = px.line(
     cases_by_student,
-    x=cases_by_student.index,
+    x="date",
     y="students"
 )
 
-figure_staff = px.bar(
+# create a line chart for the student data
+cases_by_staff = df_selection.groupby(by=['date']).sum()[['staff']].reset_index()
+fig_staff = px.line(
     cases_by_staff,
-    x=cases_by_staff.index,
-    y="staff",
-    template="plotly_white"
+    x="date",
+    y="staff"
 )
-figure_staff.update_traces(textposition="outside")
+fig_staff.update_traces(yaxis="y2")
+
+# combine the two line charts
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+fig.add_traces(fig_students.data + fig_staff.data) 
+fig['data'][0]['showlegend']=True
+fig['data'][0]['name']='Students'
+fig['data'][1]['showlegend']=True
+fig['data'][1]['name']='Staff'
+fig.layout.xaxis.title = "Date"
+fig.layout.yaxis.title = "Students"
+fig.layout.yaxis2.title = "Staff"
+fig.update_layout(legend=dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1
+))
+fig.update_layout(showlegend = True, hovermode='x')
+# change the color of each series
+fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 
 # mainpage
-col_left, col_right = st.columns(2)
-with col_left:
-    st.subheader("Student cases")
-    st.plotly_chart(figure_students)   
-
-with col_left:
-    st.subheader("Staff cases")
-    st.plotly_chart(figure_staff) 
-
+st.plotly_chart(fig)
 st.markdown("---")
-st.title("[Filtered by sidebar] Raw data")
+st.title("Data")
 st.dataframe(df_selection[['date','day_of_week','students','staff']])
 st.markdown("---")
