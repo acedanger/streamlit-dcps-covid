@@ -20,7 +20,6 @@ def getCovid():
         mon_total_staff = 0
         yr = mon.strftime('%Y')
         mn = mon.strftime('%m')
-        print(f"Processing {mn}/{yr}")
         url_api = f"https://jrapi-dev-2006.azurewebsites.net/api/sitdash/dashboard/publicreport?rc=&month={mn}&year={yr}"
 
         resp = requests.get(url_api)
