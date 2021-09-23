@@ -18,8 +18,6 @@ st.set_page_config(
     layout="wide"
 )
 st.title(f":school: Reported COVID-19 cases, as of {date.today().strftime('%m/%d/%Y')}")
-st.markdown("---")
-st.markdown("##")
 
 # mn_val = pd.DatetimeIndex(df['date']).month.unique().all()
 # mn = st.sidebar.multiselect(
@@ -41,7 +39,6 @@ df['wk'] = df['date_time'].dt.isocalendar().week
 
 # filtering based on what's selected in the sidebar
 df_selection = df.query("day_of_week == @dy")
-
 cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
 
 # create a line chart for the student data
@@ -81,9 +78,25 @@ fig.update_layout(showlegend = True, hovermode='x')
 # change the color of each series
 fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 
+cases_students = int(df.sum()[["students"]]) 
+cases_staff = int(df.sum()[["staff"]])
+
 # mainpage
+st.markdown("## 2021-2022 total cases")
+col1, col2, col3 = st.columns(3)
+with col1:
+    "**Students**"
+    cases_students
+with col2:
+    "**Staff**"
+    cases_staff
+with col3:
+    "**Total**"
+    cases_students + cases_staff
+st.markdown('---')
+# chart and raw data
 st.plotly_chart(fig)
-st.markdown("---")
-st.title("Data")
-st.dataframe(df_selection[['date','day_of_week','students','staff']])
-st.markdown("---")
+# st.dataframe(df_selection[['yr','wk','date','day_of_week','students','staff']])
+st.dataframe(df_selection[['date','day_of_week','students','staff']].groupby(by=['date','day_of_week']).sum())
+
+st.write("The [data](https://c19sitdash.azurewebsites.net/) is updated each weekday at around 8PM ET")
