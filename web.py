@@ -1,16 +1,13 @@
-from re import template
-import pandas as pd
-import streamlit as st
-import plotly.express as px
+import pandas as pd, streamlit as st, plotly.express as px, get_cases as cvd
 from datetime import date
 from os.path import exists
-import get_cases as cvd
-
+from re import template
 from plotly.subplots import make_subplots
 
-# csv exists in the same dir as this script
-csv = "dcps_dashboard_data.csv"
-df = pd.read_csv(csv) if exists(f"{csv}") else pd.DataFrame(cvd.getCovid())
+@st.cache(allow_output_mutation=True)
+def get_covid_data():
+    st.write("Cache miss: get_covid_data ran")
+    return pd.DataFrame(cvd.getCovid())
 
 st.set_page_config(
     page_title="DCPS Reported cases of COVID-19",
@@ -18,6 +15,8 @@ st.set_page_config(
     layout="wide"
 )
 st.title(f":school: Reported COVID-19 cases, as of {date.today().strftime('%m/%d/%Y')}")
+
+df = get_covid_data()
 
 # mn_val = pd.DatetimeIndex(df['date']).month.unique().all()
 # mn = st.sidebar.multiselect(
@@ -59,14 +58,18 @@ fig_staff.update_traces(yaxis="y2")
 
 # combine the two line charts
 fig = make_subplots(specs=[[{"secondary_y": True}]])
-fig.add_traces(fig_students.data + fig_staff.data) 
+fig.add_traces(fig_students.data + fig_staff.data)
+fig.layout.xaxis.title = "Date"
+fig.layout.yaxis.title = "Students"
+fig.layout.yaxis2.title = "Staff"
+
+# this somehow makes the legend show up, there has to be a better way to do this
 fig['data'][0]['showlegend']=True
 fig['data'][0]['name']='Students'
 fig['data'][1]['showlegend']=True
 fig['data'][1]['name']='Staff'
-fig.layout.xaxis.title = "Date"
-fig.layout.yaxis.title = "Students"
-fig.layout.yaxis2.title = "Staff"
+
+# change the location of the legend
 fig.update_layout(legend=dict(
     orientation="h",
     yanchor="bottom",
@@ -81,18 +84,23 @@ fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 cases_students = int(df.sum()[["students"]]) 
 cases_staff = int(df.sum()[["staff"]])
 
+df_last_change = df[['students','staff']].tail(1)
+last_change = {
+    'students': df_last_change['students'].values[0],
+    'staff': df_last_change['staff'].values[0]
+}
 # mainpage
 st.markdown("## 2021-2022 total cases")
 col1, col2, col3 = st.columns(3)
 with col1:
     "**Students**"
-    cases_students
+    st.markdown(f"{cases_students} (:arrow_up_small:{last_change['students']})")
 with col2:
     "**Staff**"
-    cases_staff
+    st.markdown(f"{cases_staff} (:arrow_up_small:{last_change['staff']})")
 with col3:
     "**Total**"
-    cases_students + cases_staff
+    st.markdown(f"{cases_students + cases_staff} (:arrow_up_small:{last_change['students'] + last_change['staff']})")
 st.markdown('---')
 # chart and raw data
 st.plotly_chart(fig)
