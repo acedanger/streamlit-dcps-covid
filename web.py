@@ -11,7 +11,8 @@ def get_covid_data():
 st.set_page_config(
     page_title="DCPS Reported cases of COVID-19",
     page_icon=":school:",
-    layout="wide"
+    initial_sidebar_state="collapsed",  # Can be "auto", "expanded", "collapsed"
+    layout="centered"
 )
 st.title(f":school: Reported COVID-19 cases, as of {date.today().strftime('%m/%d/%Y')}")
 
@@ -80,8 +81,8 @@ fig.update_layout(showlegend = True, hovermode='x')
 # change the color of each series
 fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 
-cases_students = int(df.sum()[["students"]]) 
-cases_staff = int(df.sum()[["staff"]])
+cases_students = int(df[['students']].sum()[["students"]]) 
+cases_staff = int(df[['staff']].sum()[["staff"]])
 
 df_last_change = df[['students','staff']].tail(1)
 last_change = {
