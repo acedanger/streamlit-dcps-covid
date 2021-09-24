@@ -96,7 +96,15 @@ with col3:
 st.markdown('---')
 # chart and raw data
 st.plotly_chart(fig)
-# st.dataframe(df_selection[['yr','wk','date','day_of_week','students','staff']])
-st.dataframe(df_selection[['date','day_of_week','students','staff']].groupby(by=['date','day_of_week']).sum())
 
+df_selection=df_selection[['wk','date','day_of_week','students','staff']].sort_values(by=['wk','date'], ascending=[False, True])
+df_selection=df_selection.rename(
+        columns={
+            'wk':'Week',
+            'date':'Date',
+            'day_of_week':'Weekday',
+            'students':'Students',
+            'staff':'Staff'
+        })
+st.dataframe(df_selection)
 st.write("The [data](https://c19sitdash.azurewebsites.net/) is updated each weekday at around 8PM ET")
