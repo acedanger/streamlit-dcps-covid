@@ -6,7 +6,6 @@ from plotly.subplots import make_subplots
 
 @st.cache(allow_output_mutation=True)
 def get_covid_data():
-    st.write("Cache miss: get_covid_data ran")
     return pd.DataFrame(cvd.getCovid())
 
 st.set_page_config(
