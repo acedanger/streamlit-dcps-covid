@@ -11,19 +11,25 @@ def get_covid_data():
 st.set_page_config(
     page_title="DCPS Reported cases of COVID-19",
     page_icon=":school:",
-    initial_sidebar_state="collapsed",  # Can be "auto", "expanded", "collapsed"
+    # initial_sidebar_state="collapsed",  # Can be "auto", "expanded", "collapsed"
     layout="centered"
 )
 st.title(f":school: Reported COVID-19 cases, as of {date.today().strftime('%m/%d/%Y')}")
 
 df = get_covid_data()
 
-# mn_val = pd.DatetimeIndex(df['date']).month.unique().all()
-# mn = st.sidebar.multiselect(
-#     "Select the month:",
-#     options=mn_val,
-#     default=mn_val
-# )
+df['date_time'] = pd.to_datetime(df["date"], errors='coerce')
+df['yr'] = df['date_time'].dt.year
+df['mn'] = df['date_time'].dt.month
+df['wk'] = df['date_time'].dt.isocalendar().week
+df['yr_mn'] = df['date_time'].dt.strftime("%Y-%m")
+
+yr_mn_val = df['date_time'].dt.strftime("%Y-%m").unique().tolist() # pd.DatetimeIndex(df['date']).month.unique().all()
+yr_mn = st.sidebar.multiselect(
+    "Select the month:",
+    options=yr_mn_val,
+    default=yr_mn_val
+)
 weekdays = df['day_of_week'].unique()
 dy = st.sidebar.multiselect(
     "Select the day of week:",
@@ -31,13 +37,8 @@ dy = st.sidebar.multiselect(
     default=weekdays
 )
 
-df['date_time'] = pd.to_datetime(df["date"], errors='coerce')
-df['yr'] = df['date_time'].dt.year
-df['mn'] = df['date_time'].dt.month
-df['wk'] = df['date_time'].dt.isocalendar().week
-
 # filtering based on what's selected in the sidebar
-df_selection = df.query("day_of_week == @dy")
+df_selection = df.query("day_of_week == @dy and yr_mn == @yr_mn")
 cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
 
 # create a line chart for the student data
