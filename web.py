@@ -50,51 +50,6 @@ df['mn'] = df['date_time'].dt.month
 df['wk'] = df['date_time'].dt.isocalendar().week
 df['yr_mn'] = df['date_time'].dt.strftime("%Y-%m")
 
-yr_mn_val = df['date_time'].dt.strftime("%Y-%m").unique().tolist()
-yr_mn = st.sidebar.multiselect(
-    "Select the month:",
-    options=yr_mn_val,
-    default=yr_mn_val
-)
-weekdays_val = df['day_of_week'].unique()
-dy = st.sidebar.multiselect(
-    "Select the day of week:",
-    options=weekdays_val,
-    default=weekdays_val
-)
-
-# filtering based on what's selected in the sidebar
-df_selection = df.query("day_of_week == @dy and yr_mn == @yr_mn")
-
-cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
-cases_by_staff = df_selection.groupby(by=['date']).sum()[['staff']].reset_index()
-
-# create a line chart for the student and staff data
-fig_students = px.line(cases_by_student, x="date", y="students")
-fig_staff = px.line(cases_by_staff, x="date", y="staff")
-
-fig_staff.update_traces(yaxis="y2")
-
-# combine the two line charts
-fig = make_subplots(specs=[[{"secondary_y": True}]])
-fig.add_traces(fig_students.data + fig_staff.data)
-fig.layout.xaxis.title = "Date"
-fig.layout.yaxis.title = "Students"
-fig.layout.yaxis2.title = "Staff"
-
-# this somehow makes the legend show up, there has to be a better way to do this
-fig['data'][0]['showlegend']=True
-fig['data'][0]['name']='Students'
-fig['data'][1]['showlegend']=True
-fig['data'][1]['name']='Staff'
-
-# change the location of the legend
-fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-fig.update_layout(showlegend = True, hovermode='x') # hovermode='x' means to show values from both series
-
-# change the color of each series
-fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
-
 df_last_change = df[['students','staff']].tail(1)
 last_change = {
     'students': df_last_change['students'].values[0],
@@ -152,6 +107,44 @@ st.dataframe(df_month_summary)
 
 # chart and raw data
 st.markdown('---')
+
+# filtering based on what's selected in the sidebar
+yr_mn_all = df['date_time'].dt.strftime("%Y-%m").unique().tolist()
+yr_mn_default = df['date_time'].tail(1).dt.strftime("%Y-%m").tolist()
+
+yr_mn = st.multiselect("Choose month:", options=yr_mn_all, default=yr_mn_default)
+
+df_selection = df.query("yr_mn == @yr_mn")
+
+cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
+cases_by_staff = df_selection.groupby(by=['date']).sum()[['staff']].reset_index()
+
+# create a line chart for the student and staff data
+fig_students = px.line(cases_by_student, x="date", y="students")
+fig_staff = px.line(cases_by_staff, x="date", y="staff")
+
+fig_staff.update_traces(yaxis="y2")
+
+# combine the two line charts
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+fig.add_traces(fig_students.data + fig_staff.data)
+fig.layout.xaxis.title = "Date"
+fig.layout.yaxis.title = "Students"
+fig.layout.yaxis2.title = "Staff"
+
+# this somehow makes the legend show up, there has to be a better way to do this
+fig['data'][0]['showlegend']=True
+fig['data'][0]['name']='Students'
+fig['data'][1]['showlegend']=True
+fig['data'][1]['name']='Staff'
+
+# change the location of the legend
+fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+fig.update_layout(showlegend = True, hovermode='x') # hovermode='x' means to show values from both series
+
+# change the color of each series
+fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
+
 st.write("The [data](https://c19sitdash.azurewebsites.net/) is updated each weekday at approximately 8PM ET")
 st.plotly_chart(fig, use_container_width=True)
 
