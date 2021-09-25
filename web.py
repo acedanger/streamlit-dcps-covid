@@ -137,7 +137,6 @@ with summary_col2:
 with summary_col3:
     st.metric(label='Total cases', value=cases_students + cases_staff, delta=int(last_change['students'] + last_change['staff']))
 
-st.markdown('## Metrics')
 st.markdown('### 7 day rolling average')
 
 df_rolling_average_curr = pd.DataFrame.from_dict(rolling_average['Current'], orient='index', columns=['Average'])
