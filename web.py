@@ -5,7 +5,6 @@ from os.path import exists
 from re import template
 from plotly.subplots import make_subplots
 
-@st.cache(allow_output_mutation=True)
 def get_covid_data():
     return pd.DataFrame(cvd.getCovid())
 
