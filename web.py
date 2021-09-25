@@ -106,9 +106,9 @@ last_change = {
 }
 
 avg = {
-    'students': df[['students']].tail(7).mean().sum(),
-    'staff': df[['staff']].tail(7).mean().sum(),
-    'total': df[['students','staff']].tail(7).mean().sum(), 
+    'Students': df[['students']].tail(7).mean().sum(),
+    'Staff': df[['staff']].tail(7).mean().sum(),
+    'Total': df[['students','staff']].tail(7).mean().sum(), 
 }
 
 df_month_summary = df[['yr','mn','students','staff','total']].groupby(by=['yr','mn']).sum()[['students','staff','total']]
@@ -136,7 +136,10 @@ with summary_col3:
 
 st.markdown('## Metrics')
 st.markdown('### 7 day rolling average')
-st.dataframe()
+st.dataframe(
+    pd.DataFrame.from_dict(avg, orient='index', columns=['Average'])
+)
+
 st.markdown('### Total cases by month')
 st.dataframe(df_month_summary)
 
