@@ -10,7 +10,7 @@ def get_covid_data():
     return pd.DataFrame(cvd.getCovid())
 
 
-def set_dataframe_style(dataframe):
+def style_dataframe(dataframe):
     # styles of displayed data frames (df*)
     cell_hover = {  # for row hover use <tr> instead of <td>
         'selector': 'td:hover',
@@ -96,23 +96,26 @@ fig.update_layout(showlegend = True, hovermode='x') # hovermode='x' means to sho
 # change the color of each series
 fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 
-cases_students = int(df[['students']].sum()[["students"]]) 
-cases_staff = int(df[['staff']].sum()[["staff"]])
-
 df_last_change = df[['students','staff']].tail(1)
 last_change = {
     'students': df_last_change['students'].values[0],
     'staff': df_last_change['staff'].values[0]
 }
 
-avg = {
-    'Students': df[['students']].tail(7).mean().sum(),
-    'Staff': df[['staff']].tail(7).mean().sum(),
-    'Total': df[['students','staff']].tail(7).mean().sum(), 
+rolling_average = {
+    'Current': {'Students': df[['students']].tail(7).mean().sum(),
+                'Staff': df[['staff']].tail(7).mean().sum()
+    },
+    # I want 7 of the last 8 dates so I can calculate the change in the 7 day rolling average 
+    #   .tail(8) keeps the last 8 rows
+    #   .loc[:-1] removes the last row
+    'Previous': {'Students': df[['students']].tail(8).iloc[:-1].mean().sum(),
+                'Staff': df[['staff']].tail(8).iloc[:-1].mean().sum()
+    }
 }
 
 df_month_summary = df[['yr','mn','students','staff','total']].groupby(by=['yr','mn']).sum()[['students','staff','total']]
-set_dataframe_style(df_month_summary)
+style_dataframe(df_month_summary)
 df_month_summary.rename(
             columns={
                 'wk':'Week',
@@ -123,22 +126,28 @@ df_month_summary.rename(
 
 # mainpage
 st.markdown("## 2021-2022 total cases")
+
+cases_students = int(df[['students']].sum()[["students"]]) 
+cases_staff = int(df[['staff']].sum()[["staff"]])
+
 summary_col1, summary_col2, summary_col3 = st.columns(3)
 with summary_col1:
-    "**Students**"
-    st.markdown(f"{cases_students} (:arrow_up_small:{last_change['students']})")
+    st.metric(label='Student cases', value=cases_students, delta=int(last_change['students']))
 with summary_col2:
-    "**Staff**"
-    st.markdown(f"{cases_staff} (:arrow_up_small:{last_change['staff']})")
+    st.metric(label='Staff cases', value=cases_staff, delta=int(last_change['staff']))
 with summary_col3:
-    "**Total**"
-    st.markdown(f"{cases_students + cases_staff} (:arrow_up_small:{last_change['students'] + last_change['staff']})")
+    st.metric(label='Total cases', value=cases_students + cases_staff, delta=int(last_change['students'] + last_change['staff']))
 
 st.markdown('## Metrics')
 st.markdown('### 7 day rolling average')
-st.dataframe(
-    pd.DataFrame.from_dict(avg, orient='index', columns=['Average'])
-)
+
+df_rolling_average_curr = pd.DataFrame.from_dict(rolling_average['Current'], orient='index', columns=['Average'])
+df_rolling_average_prev = pd.DataFrame.from_dict(rolling_average['Previous'], orient='index', columns=['Average'])
+
+average_curr = round(float(df_rolling_average_curr[['Average']].sum()), 2)
+average_prev = round(float(df_rolling_average_prev[['Average']].sum()), 2)
+
+st.metric(label='Average', value=average_curr, delta=average_curr-average_prev)
 
 st.markdown('### Total cases by month')
 st.dataframe(df_month_summary)
@@ -160,6 +169,6 @@ with expander_data:
                 'staff':'Staff'
             })
 
-    set_dataframe_style(df_selection)
+    style_dataframe(df_selection)
     st.dataframe(df_selection)
  
