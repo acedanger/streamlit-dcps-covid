@@ -8,31 +8,19 @@ from plotly.subplots import make_subplots
 def get_covid_data():
     return pd.DataFrame(cvd.getCovid())
 
-
-def style_dataframe(dataframe):
-    # styles of displayed data frames (df*)
-    cell_hover = {  # for row hover use <tr> instead of <td>
-        'selector': 'td:hover',
-        'props': [('background-color', '#ffffb3')]
-    }
-    index_names = {
-        'selector': '.index_name',
-        'props': 'font-style: italic; color: darkgrey; font-weight:normal;'
-    }
-    headers = {
-        'selector': 'th:not(.index_name)',
-        'props': 'background-color: #000066; color: white;'
-    }
-
-    style_df = dataframe.style
-    style_df.set_table_styles([cell_hover, index_names, headers])
-    style_df.set_table_styles([
-        {'selector': 'th.col_heading', 'props': 'text-align: center;'},
-        {'selector': 'th.col_heading.level0', 'props': 'font-size: 1.5em;'},
-        {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'},
-    ], overwrite=False)
-
-    return
+# dataframe styling
+cell_hover = {  # for row hover use <tr> instead of <td>
+    'selector': 'td:hover',
+    'props': [('background-color', '#ffffb3')]
+}
+index_names = {
+    'selector': '.index_name',
+    'props': 'font-style: italic; color: darkgrey; font-weight:normal;'
+}
+headers = {
+    'selector': 'th:not(.index_name)',
+    'props': 'background-color: #000066; color: white;'
+}
 
 st.set_page_config(
     page_title="DCPS Reported cases of COVID-19",
@@ -69,7 +57,6 @@ rolling_average = {
 }
 
 df_month_summary = df[['yr','mn','students','staff','total']].groupby(by=['yr','mn']).sum()[['students','staff','total']]
-style_dataframe(df_month_summary)
 df_month_summary.rename(
             columns={
                 'wk':'Week',
@@ -103,7 +90,14 @@ average_prev = round(float(df_rolling_average_prev[['Average']].sum()), 2)
 st.metric(label='Average', value=average_curr, delta=average_curr-average_prev)
 
 st.markdown('### Total cases by month')
-st.dataframe(df_month_summary)
+st.dataframe(
+    df_month_summary.style.set_table_styles(
+            [cell_hover, index_names, headers, 
+                {'selector': 'th.col_heading', 'props': 'text-align: center;'},
+                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1.5em;'},
+                {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
+            ], overwrite=False)
+)
 
 # chart and raw data
 st.markdown('---')
@@ -148,18 +142,27 @@ fig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
 st.write("The [data](https://c19sitdash.azurewebsites.net/) is updated each weekday at approximately 8PM ET")
 st.plotly_chart(fig, use_container_width=True)
 
-expander_data = st.expander(label="Toggle data", expanded=False)
+expander_data = st.expander(label="Toggle data", expanded=True)
 with expander_data:
-    df_selection=df_selection[['wk','date','day_of_week','students','staff']].sort_values(by=['wk','date'], ascending=[False, True])
+    df_selection=df_selection[['wk','day_of_week','date','students','staff','total']].sort_values(by=['wk','date'], ascending=[False, True])
     df_selection=df_selection.rename(
             columns={
                 'wk':'Week',
                 'date':'Date',
                 'day_of_week':'Weekday',
                 'students':'Students',
-                'staff':'Staff'
+                'staff':'Staff',
+                'total':'Total'
             })
 
-    style_dataframe(df_selection)
-    st.dataframe(df_selection)
+    # style_dataframe(df_selection)
+    df_selection.style.highlight_max()
+    st.table(
+        df_selection.style.set_table_styles(
+            [cell_hover, index_names, headers, 
+                {'selector': 'th.col_heading', 'props': 'text-align: center;'},
+                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1.5em;'},
+                {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
+            ], overwrite=False)
+    )
  
