@@ -9,10 +9,10 @@ def get_covid_data():
     return pd.DataFrame(cvd.getCovid())
 
 # dataframe styling
-cell_hover = {  # for row hover use <tr> instead of <td>
-    'selector': 'td:hover',
-    'props': [('background-color', '#ffffb3')]
-}
+# cell_hover = {  # for row hover use <tr> instead of <td>
+#     'selector': 'td:hover',
+#     'props': [('background-color', '#eeeeee')]
+# }
 index_names = {
     'selector': '.index_name',
     'props': 'font-style: italic; color: darkgrey; font-weight:normal;'
@@ -92,9 +92,9 @@ st.metric(label='Average', value=average_curr, delta=average_curr-average_prev)
 st.markdown('### Total cases by month')
 st.dataframe(
     df_month_summary.style.set_table_styles(
-            [cell_hover, index_names, headers, 
+            [index_names, headers, # cell_hover
                 {'selector': 'th.col_heading', 'props': 'text-align: center;'},
-                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1.5em;'},
+                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1em;'},
                 {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
             ], overwrite=False)
 )
@@ -155,13 +155,10 @@ with expander_data:
                 'total':'Total'
             })
 
-    # style_dataframe(df_selection)
-    df_selection.style.highlight_max()
     st.table(
         df_selection.style.set_table_styles(
-            [cell_hover, index_names, headers, 
-                {'selector': 'th.col_heading', 'props': 'text-align: center;'},
-                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1.5em;'},
+            [index_names, headers, # cell_hover
+                {'selector': 'th.col_heading.level0', 'props': 'font-size: 1em;'},
                 {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
             ], overwrite=False)
     )
