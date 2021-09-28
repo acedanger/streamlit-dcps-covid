@@ -9,10 +9,6 @@ def get_covid_data():
     return pd.DataFrame(cvd.getCovid())
 
 # dataframe styling
-# cell_hover = {  # for row hover use <tr> instead of <td>
-#     'selector': 'td:hover',
-#     'props': [('background-color', '#eeeeee')]
-# }
 index_names = {
     'selector': '.index_name',
     'props': 'font-style: italic; color: darkgrey; font-weight:normal;'
@@ -92,7 +88,7 @@ st.metric(label='Average', value=average_curr, delta=average_curr-average_prev)
 st.markdown('### Total cases by month')
 st.dataframe(
     df_month_summary.style.set_table_styles(
-            [index_names, headers, # cell_hover
+            [index_names, headers,
                 {'selector': 'th.col_heading', 'props': 'text-align: center;'},
                 {'selector': 'th.col_heading.level0', 'props': 'font-size: 1em;'},
                 {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
@@ -105,10 +101,12 @@ st.markdown('---')
 # filtering based on what's selected in the sidebar
 yr_mn_all = df['date_time'].dt.strftime("%Y-%m").unique().tolist()
 yr_mn_default = df['date_time'].tail(1).dt.strftime("%Y-%m").tolist()
-
 yr_mn = st.multiselect("Choose month:", options=yr_mn_all, default=yr_mn_default)
 
-df_selection = df.query("yr_mn == @yr_mn")
+day_of_week_options = df['day_of_week'].unique().tolist()
+day_of_week = st.multiselect("Choose day of week:", options=day_of_week_options, default=day_of_week_options)
+
+df_selection = df.query("yr_mn == @yr_mn and day_of_week == @day_of_week")
 
 cases_by_student = df_selection.groupby(by=['date']).sum()[['students']].reset_index()
 cases_by_staff = df_selection.groupby(by=['date']).sum()[['staff']].reset_index()
@@ -157,7 +155,7 @@ with expander_data:
 
     st.table(
         df_selection.style.set_table_styles(
-            [index_names, headers, # cell_hover
+            [index_names, headers,
                 {'selector': 'th.col_heading.level0', 'props': 'font-size: 1em;'},
                 {'selector': 'td', 'props': 'text-align: center; font-weight: bold;'}
             ], overwrite=False)
