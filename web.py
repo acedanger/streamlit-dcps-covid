@@ -99,12 +99,18 @@ st.dataframe(
 st.markdown('---')
 
 # filtering based on what's selected in the sidebar
+container_filter = st.container()
+select_all_yr_mn = st.checkbox('Select all months')
+select_all_day = st.checkbox('Select all days')
+
 yr_mn_all = df['date_time'].dt.strftime("%Y-%m").unique().tolist()
 yr_mn_default = df['date_time'].tail(1).dt.strftime("%Y-%m").tolist()
-yr_mn = st.multiselect("Choose month:", options=yr_mn_all, default=yr_mn_default)
+sel_yr_mn = yr_mn_all if select_all_yr_mn else yr_mn_default
+yr_mn = st.multiselect("Choose month:", options=yr_mn_all, default=sel_yr_mn)
 
 day_of_week_options = df['day_of_week'].unique().tolist()
 day_of_week = st.multiselect("Choose day of week:", options=day_of_week_options, default=day_of_week_options)
+
 
 df_selection = df.query("yr_mn == @yr_mn and day_of_week == @day_of_week")
 
